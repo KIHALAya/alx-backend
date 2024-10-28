@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Pagination module with Server class to paginate a dataset.
+Hypermedia pagination module with Server class for paginating a dataset.
 """
 
 import csv
-from typing import List, Tuple
+import math
+from typing import List, Dict, Tuple
 
 
 def index_range(page: int, page_size: int) -> Tuple[int, int]:
@@ -37,7 +38,7 @@ class Server:
             with open(self.DATA_FILE) as f:
                 reader = csv.reader(f)
                 dataset = [row for row in reader]
-            self.__dataset = dataset[1:]  # Exclude header row
+            self.__dataset = dataset[1:]
 
         return self.__dataset
 
@@ -62,3 +63,27 @@ class Server:
 
         data = self.dataset()
         return data[start_index:end_index] if start_index < len(data) else []
+
+    def get_hyper(self, page: int = 1, page_size: int = 10) -> Dict:
+        """
+        Returns a dictionary containing pagination information.
+
+        Args:
+            page (int): The 1-indexed page number.
+            page_size (int): Number of items per page.
+
+        Returns:
+            Dict: A dictionary with pagination details.
+        """
+        data = self.get_page(page, page_size)
+        total_data = len(self.dataset())
+        total_pages = math.ceil(total_data / page_size)
+
+        return {
+            "page_size": len(data),
+            "page": page,
+            "data": data,
+            "next_page": page + 1 if page < total_pages else None,
+            "prev_page": page - 1 if page > 1 else None,
+            "total_pages": total_pages,
+        }
